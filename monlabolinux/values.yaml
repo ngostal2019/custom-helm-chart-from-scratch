@@ -1,0 +1,47 @@
+customMetadata:
+  annotations: |-
+    k8s.io/owner: {{ .Chart.Name }}
+    helm.io/contact: touchless
+    k8s.io/registry: dockerhub
+    k8s.io/address: https://hub.docker.com/_/{{ .Chart.Name }}
+
+  namespace: default
+  labels:
+    app: nginx
+    userID: "1000"
+    groupID: "1000"
+    version: "1.14.2"
+
+podSpec:
+  replicaCount: 1
+
+containerSpec:
+  image:
+    repository: nginx
+    tag: ""
+    pullPolicy: IfNotPresent
+  port: 80
+  resources:
+    limits:
+      memory: "128Mi"
+      cpu: "500m"
+    requests:
+      memory: "64Mi"
+      cpu: "250m"
+
+targetEnv: dev
+
+serviceSpec:
+  nodePort:
+    enabled: false
+    nodePort: 30080
+    type: NodePort
+  loadBalancer:
+    enabled: true
+    type: LoadBalancer
+  name: http
+  port: 80
+
+config:
+  indexhtml: 'files/index.html'
+    

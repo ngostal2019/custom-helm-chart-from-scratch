@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    {{- tpl .Values.customMetadata.annotations . | nindent 4 }}
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-{{ .Values.targetEnv }}-deploy
+  namespace: {{ .Values.customMetadata.namespace }}
+  labels: {{- toYaml .Values.customMetadata.labels | nindent 4 }}
+spec:
+{{- if eq .Values.targetEnv "prod" }}
+  replicas: 8
+{{- else if eq .Values.targetEnv "stg" }}
+  replicas: 4
+{{- else }}
+  replicas: {{ .Values.podSpec.replicaCount }}
+{{- end }}
+  selector:
+    matchLabels:
+      {{- toYaml .Values.customMetadata.labels | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- toYaml .Values.customMetadata.labels | nindent 8 }}
+    spec:
+      volumes:
+        - name: {{ .Release.Name }}-{{ .Chart.Name }}-{{ .Values.targetEnv }}-vol
+          configMap:
+            name: {{ .Release.Name }}-{{ .Chart.Name }}-{{ .Values.targetEnv }}-cmp
+            items:
+              - key: "index.html"
+                path: "index.html"
+      containers:
+      - name: {{ .Release.Name }}-{{ .Chart.Name }}-{{ .Values.targetEnv }}-nginx
+        image: {{ .Values.containerSpec.image.repository }}:{{ default .Chart.AppVersion .Values.containerSpec.image.tag }}
+        ports:
+        - name: http-{{ .Values.containerSpec.port }}
+          containerPort: {{ .Values.containerSpec.port }}
+          protocol: TCP
+        imagePullPolicy: {{ .Values.containerSpec.image.pullPolicy }}
+        volumeMounts:
+        - name: {{ .Release.Name }}-{{ .Chart.Name }}-{{ .Values.targetEnv }}-vol
+          mountPath: /usr/share/nginx/html/index.html
+          subPath: index.html
+          readOnly: true
+        resources:
+{{- range $key, $value := .Values.containerSpec.resources }}
+          {{ $key }}:
+{{- toYaml $value | nindent 12 }}
+{{- end }}         

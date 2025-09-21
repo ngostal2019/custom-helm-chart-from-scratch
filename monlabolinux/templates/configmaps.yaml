@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  annotations:
+    {{- tpl .Values.customMetadata.annotations . | nindent 4 }}
+  labels: {{- toYaml .Values.customMetadata.labels | nindent 4 }}
+  namespace: {{ .Values.customMetadata.namespace }}
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-{{ .Values.targetEnv }}-cmp
+data:
+  index.html: |-
+{{- .Files.Get .Values.config.indexhtml | nindent 4 }}
